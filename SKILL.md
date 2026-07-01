@@ -10,14 +10,15 @@ description: Use when the user is preparing for a course final exam and needs to
 
 ## Overview
 
-This skill guides an AI assistant through a 5-phase process to:
+This skill guides an AI assistant through a 6-phase process to:
 1. Parse exam requirements and course materials
 2. Extract and catalog all knowledge points
-3. Generate 7 standardized review documents
+3. Generate standardized review documents
 4. Verify completeness against exam syllabus
 5. Export in Markdown format (with merged version for Notion import)
+6. **(Optional)** Generate exam-approach guide organized by question type with mastery task chains
 
-**Target output**: A dynamically-configured review package (5-9 documents) adapted to the specific exam type and course nature, ready for import to Notion or hand-copying to cheat sheet.
+**Target output**: A dynamically-configured review package (5-11 documents) adapted to the specific exam type and course nature, ready for import to Notion or hand-copying to cheat sheet.
 
 ---
 
@@ -34,6 +35,24 @@ The AI MUST first detect exam type and course nature from the syllabus, then adj
 | **Programming/编程** | "编程", "代码", "算法实现", "实验" | Code templates, algorithm pseudocode, test cases, debugging checklists |
 | **Calculation/计算** | "计算", "数值", "推导", "证明" | Formula sheets with derivations, step-by-step templates, unit/dimension checks |
 | **Mixed/混合** | Multiple types listed | Combine relevant document types from above |
+
+### Phase 6 Activation Trigger (new in v1.1)
+
+Phase 6 (Exam-Approach Guide) should be activated when **ALL** of the following are true:
+
+1. The exam has **multiple distinct question types** with clear structural patterns (e.g., "简答 + 算法设计 + 计算" or "填空 + 选择 + 大题")
+2. Past exams or syllabus indicate **consistent question templates** that repeat across years (e.g., "Sort always asks: given an array, write the process + pseudocode + complexity")
+3. The course involves **procedural/algorithmic knowledge** where "how to answer" can be broken into step-by-step task chains (not just concept recall)
+
+Typical courses that trigger Phase 6:
+- CS Algorithm courses (算法设计与分析, Data Structures)
+- Engineering calculation courses (信号与系统, 电路分析)
+- Mixed-format STEM exams with problem-solving patterns
+
+Courses that typically do NOT trigger Phase 6:
+- Pure essay/memorization exams (历史, 文学)
+- Pure multiple-choice exams without consistent patterns
+- Exams where all questions are unique and unpredictable
 
 ### Course Type Detection (from content)
 
@@ -356,8 +375,8 @@ Step 4: [Interpret/verify]
 - Timeline: Year → Event → Significance
 - Flowchart: Step → Sub-step → Key Detail
 
-### Document 7: README & Study Plan (README.md)
-**Purpose**: Navigation, time allocation, learning strategy
+### Document 7: Study Plan README (README.md)
+**Purpose**: Navigation, time allocation, learning strategy. When Phase 6 is active, this document MUST include BOTH study approaches so the user can choose.
 **Structure**:
 ```markdown
 # Review Package Guide
@@ -365,12 +384,21 @@ Step 4: [Interpret/verify]
 ## File Inventory
 | File | Purpose | When to Read |
 
-## Recommended Study Schedule
+## Study Plan (choose one approach, or do both in sequence)
+
+### Approach A: Knowledge-First (按章节，适合时间充裕)
 | Round | Duration | Focus | Files |
 | Round 1 (Skeleton) | 2h | Structure + Formulas | Review Guide + A4 Sheet |
 | Round 2 (Q&A) | 3h | Predicted questions | Q&A Predictions |
 | Round 3 (Calculations) | 2h | Practice problems | Calculation Workshop |
 | Round 4 (A4 Copy) | 1h | Memorize cheat sheet | A4 Sheet |
+
+### Approach B: Exam-Question-First (按题型，适合时间紧张) [only when Phase 6 is active]
+Detailed task chains per question type — see **01-全题型模版与解答指南.md**.
+| Batch | Question Types | Score | Estimated Time |
+| Batch 1 | Master Method + Recursion Tree + Insertion Sort | ~30 | 3h |
+| Batch 2 | LCS + Matrix Chain | ~20-25 | 3h |
+| ... | ... | ... | ... |
 
 ## Chapter Priority (by exam weight)
 1. Chapter X (20%) — Start here
@@ -433,6 +461,142 @@ Generate ` completeness_assessment_report.md ` with:
 
 ---
 
+## Phase 6: Exam-Approach Guide Generation (Optional — 题型导向复习指南)
+
+> **Activation**: See "Phase 6 Activation Trigger" in Adaptive Configuration above. Only generate when the exam has identifiable question-type patterns.
+> **Prerequisite**: All Phase 3 knowledge documents must be complete first. This phase depends on them.
+
+### Purpose
+
+Transform the chapter-organized knowledge documents into an **exam-question-first** study approach. Instead of "read Chapter 1, then Chapter 2", the user gets: "To master Master Method questions: Step 1 read §1.4 → Step 2 do Example 1-1 → Step 3 verify with 2024 Past Paper A-1".
+
+This is especially valuable when:
+- The user has limited time and wants to directly practice "what will be on the paper"
+- The exam has stable question templates that repeat across years
+- The user finds chapter-by-chapter reading too slow and unfocused
+
+### 6.1 Question-Type Pattern Extraction
+
+Analyze ALL available materials (syllabus, past exams, teacher hints, extracted course content) to identify every distinct question type. For each type, determine:
+
+| Attribute | Source | Example |
+|-----------|--------|---------|
+| **What it looks like on the paper** | Past exams + syllabus | "给定递归式 T(n)=aT(n/b)+f(n)，求解" |
+| **Sub-questions always asked** | Past exam patterns | "(1) 写出a,b,n^{log_b a} (2) 比较f(n) (3) 结论" |
+| **Score weight** | Syllabus + past exams | 10 points |
+| **Frequency/certainty** | Teacher hints + past data | 🔴必考 / 🟠高频 / 🟡可能 / 🟢边缘 |
+| **Required skills** | Cognitive level mapping | 记忆 / 理解 / 计算 / 综合 |
+
+### 6.2 Document Generation: Question-Type Template Guide (01-全题型模版与解答指南.md)
+
+**Structure for each question type**:
+```markdown
+## 📝 题型N：[Question Type Name]（分值）
+
+### 🔴/🟠/🟡 Priority Level
+
+### 卷子上的样子
+[Complete, realistic exam question as it appears on paper — with actual data, tables, diagrams]
+
+### 你怎么答（答题标准步骤）
+[Step-by-step: exactly what to write, in what order, with what format]
+
+### 答题检查清单
+- [ ] Required element 1
+- [ ] Required element 2
+
+### 例题训练
+| 例题 | 数据 | 在哪个文件练 |
+|------|------|------------|
+| 例N-1 | [specific data] | 计算题精讲 第X-Y行 |
+| 真题 | [past paper data] | 2024大题复习题 第X-Y行 |
+
+### 基础知识来源
+| 要理解的概念 | 详细讲解位置 |
+|------------|------------|
+| Concept A | 期末复习指南 §X.Y |
+| Pseudocode | 伪代码模板集 第X-Y行 |
+| Quick Ref | A4救命纸 第X-Y行 |
+```
+
+**CRITICAL rules**:
+1. Every "where to find" reference MUST include exact file name + section/chapter/line range (not just "see X file")
+2. Priority levels MUST align with teacher hints and past exam data — do not guess
+3. The "卷子上的样子" section must be a COMPLETE, realistic question, not just "给你一个数组，让你排序" — include actual numbers, actual tables, actual diagrams
+4. Each question type must link to ALL relevant knowledge sources (guide + pseudocode + calculation workshop + Q&A + comparison tables + A4 sheet)
+5. Include a "快速索引" section at the end mapping "I want to practice X" → exact file + line range
+
+### 6.3 Mastery Task Chains (掌握路径)
+
+For each question type, generate a step-by-step mastery chain. This is DIFFERENT from the answer template — it tells the user how to LEARN to answer this type, not how to answer it on the exam.
+
+**Format**:
+```markdown
+### 🔴 题型X：[Name]（Score）
+
+**最终要求**：[What the user should be able to do independently]
+
+**掌握路径：**
+
+| 步骤 | 做什么 | 具体位置 |
+|:---:|--------|---------|
+| 1 | [Understand the core concept] | [File §Section, line range] |
+| 2 | [Follow a worked example step by step] | [File, example number, line range] |
+| 3 | [Independent practice with different data] | [File, exercise number, line range] |
+| 4 | [Verify with past paper question] | [File, past paper ID, line range] |
+
+**⚠️ 陷阱/扣分点**：[Common mistakes specific to this question type]
+```
+
+**Rules for task chains**:
+- Each step must reference EXACT locations, not general file names
+- Steps must be ordered: understand → follow-along → independent-practice → verify
+- Include common traps/扣分点 specific to that question type
+- At the end, provide a "自检标准" (self-check criteria): what does "mastered" look like for this type?
+
+### 6.4 Batch Execution Order (执行顺序建议)
+
+After all task chains are generated, organize them into execution batches ordered by score weight:
+
+```markdown
+| 批次 | 题型 | 分值 | 预计耗时 |
+|:---:|------|:---:|:---:|
+| 第1批 | [Highest score types] | ~X分 | Xh |
+| 第2批 | [Next priority] | ~X分 | Xh |
+...
+| 考前 | A4纸最后一遍 + 填空/选择再过一遍 | — | 0.5h |
+```
+
+### 6.5 Update README with Dual-Plan Navigation
+
+When Phase 6 is complete, update `README.md` to present BOTH study approaches:
+
+```markdown
+## Study Plan (choose one)
+
+### Approach A: Knowledge-First（按章节，适合时间充裕）
+[Existing chapter/timeline schedule]
+
+### Approach B: Exam-Question-First（按题型，适合时间紧张）
+详细任务链见 **01-全题型模版与解答指南.md**。
+[Batch execution order table from 6.4]
+```
+
+Also update the file inventory to include the new `01-全题型模版与解答指南.md` as a ⭐ priority file.
+
+### 6.6 Quality Check for Phase 6
+
+- [ ] Every question type has a realistic "卷子上的样子" with actual data
+- [ ] Every question type links to all relevant knowledge sources with exact locations
+- [ ] Task chain steps are ordered: understand → follow → practice → verify
+- [ ] Common traps/扣分点 are identified for each type
+- [ ] Self-check criteria are concrete and testable (not vague like "understood")
+- [ ] Batch execution order respects score weight priority
+- [ ] README.md updated with dual-plan navigation
+- [ ] No hallucinated question types — all types are backed by syllabus/past exams/teacher hints
+
+---
+
 ## Cross-Platform Installation Guide
 
 ### OpenCode
@@ -471,9 +635,10 @@ follow this workflow:
 1. Parse syllabus for chapter weights and question types
 2. Extract text from all uploaded PPTs using python-pptx
 3. Organize content by chapter and cognitive level
-4. Generate 7 documents: A4 Cheat Sheet, Study Guide, Q&A, Calculations, Comparisons, Timeline, README
+4. Generate documents: A4 Cheat Sheet, Study Guide, Q&A, Calculations, Comparisons, Timeline, README
 5. Verify coverage against syllabus
-6. Output in Markdown format
+6. (Optional) If exam has clear question-type patterns, generate exam-approach guide (Phase 6)
+7. Output in Markdown format
 ```
 
 ---
@@ -495,6 +660,7 @@ follow this workflow:
 - "对比现有复习资料和PPT，检查有没有遗漏"
 - "把A4纸内容再精简一些，确保两面能写完"
 - "合并成一个文件方便导入Notion"
+- "帮我按照题型整理一份复习指南，我想直接按卷子上的题型来复习"
 
 ---
 
@@ -521,6 +687,6 @@ follow this workflow:
 
 ---
 
-*Version: 1.0*
+*Version: 1.1*
 *Compatible with: OpenCode ≥ 0.x, Claude Code, Claude Desktop, GitHub Copilot*
 *License: MIT (or user-specified)*
